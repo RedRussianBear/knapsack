@@ -41,7 +41,26 @@ public class Knapsack {
 		
 		return Math.max(solution1, solution2);
 	}
-	
+	public int dpSolution01(){
+		int[][] solution = new int[maxCapacity + 1][contents.length+1];
+		
+		//base cases:
+		for (int i = 0; i <= contents.length; i++) solution[0][i] = 0;
+		for (int i = 0; i <= maxCapacity; i++) solution[i][0] = 0;
+		
+		//go row by row until you get to the end
+		//row = capacity, col = elements
+		for (int row = 1; row <= maxCapacity; row++){
+			for (int col = 1; col <= contents.length; col++){
+				if (contents[col-1].getWeight() > row)
+					solution[row][col] = solution[row][col - 1];//same weight, one less element
+				else
+					solution[row][col] = Math.max(solution[row][col - 1], contents[col-1].getValue() + solution[row-contents[col-1].getWeight()][col - 1]);
+			}
+		}
+		
+		return solution[maxCapacity][contents.length];
+	}
 	/**
 	 * Recursive solution to the Unbounded Knapsack Problem, meaning you can take as many of an object as you want
 	 * Very similar to 01 problem, there are just more cases to consider
@@ -70,7 +89,32 @@ public class Knapsack {
 		}
 		return maxSolution;
 	}
-	
+	public int dpSolutionUn(){
+		int elements = contents.length;
+		int capacity = maxCapacity;
+		//same thing:
+		int[][] solution = new int[maxCapacity + 1][contents.length+1];
+		
+		//base cases:
+		for (int i = 0; i <= contents.length; i++) solution[0][i] = 0;
+		for (int i = 0; i <= maxCapacity; i++) solution[i][0] = 0;
+		
+		//go row by row until you get to the end
+		//row = capacity, col = elements
+		for (int row = 1; row <= maxCapacity; row++){
+			for (int col = 1; col <= contents.length; col++){
+				int[] sols = new int[row/contents[col - 1].getWeight() + 1];
+				for (int i = 0; i < sols.length; i++){
+					sols[i] = i * contents[col - 1].getValue() + solution[row - i * contents[col-1].getWeight()][col - 1];
+				}
+				int max = 0;
+				for (int num: sols)
+					max = Math.max(max, num);
+				solution[row][col] = max;
+			}
+		}
+		return solution[capacity][elements];
+	}
 	/**
 	 * Solves 0/1 problem given a capacity
 	 * Easier to call
@@ -89,13 +133,26 @@ public class Knapsack {
 		return recursiveSolutionUn(contents.length, maxCapacity);
 	}
 	
+	public void setCapacity(int a){
+		maxCapacity = a;
+	}
 	public static void main(String[] args){
-		Thing[] t = new Thing[4];
-		t[0] = new Thing(6, 30);
-		t[1] = new Thing(3, 14);
-		t[2] = new Thing(4, 16);
-		t[3] = new Thing(2, 9);
-		Knapsack K = new Knapsack(t, 10);
+		Thing[] t = new Thing[5];
+		t[0] = new Thing(2, 3);
+		t[1] = new Thing(4, 5);
+		t[2] = new Thing(5, 6);
+		t[3] = new Thing(7, 8);
+		t[4] = new Thing(9, 10);
+		Knapsack K = new Knapsack(t, 20);
+		System.out.println(K.solve01());
+		System.out.println(K.dpSolution01());
 		System.out.println(K.solveUn());
+		System.out.println(K.dpSolutionUn());
+		K.setCapacity(19);
+		System.out.println(K.solve01());
+		System.out.println(K.dpSolution01());
+		System.out.println(K.solveUn());
+		System.out.println(K.dpSolutionUn());
+		
 	}
 }
