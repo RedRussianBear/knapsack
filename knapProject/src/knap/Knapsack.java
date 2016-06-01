@@ -68,52 +68,54 @@ public class Knapsack {
 	 * @param capacity = capacity in knapsack
 	 * @return
 	 */
-	public int recursiveSolutionUn(int elements, int capacity){
-		//Base case: 0 terms or 0 space
-		if (elements == 0 || capacity == 0)
-			return 0;
-		
-		/*holds all of the solutions 
-		*including last term 0 times -> including it capacity/weight times (max amount)*/
-		int[] solutions = new int[capacity/contents[elements-1].getWeight() + 1];//0 ... capacity/last weight
-		
-		for (int i = 0; i < solutions.length; i++){
-			//Uses i of the last term 
-			solutions[i] = i * contents[elements-1].getValue() + recursiveSolutionUn(elements - 1, capacity - i * contents[elements - 1].getWeight());
-		}
-		
-		//returns max solution
+	public int recursiveSolutionUn(int capacity){
 		int maxSolution = 0;
-		for (int i: solutions){
-			maxSolution = Math.max(maxSolution, i);
+		
+		for (int i = 0; i < contents.length; i++){
+			//if item is too big, don't consider it
+			if(contents[i].getWeight() > capacity)
+				continue;
+			
+			int tempSolution = contents[i].getValue() + recursiveSolutionUn(capacity - contents[i].getWeight);
+			if(tempSolution > maxSolution)
+				maxSolution = tempSolution;
 		}
+
+		//return the largest sub solution
 		return maxSolution;
 	}
+	
+	/**
+	* 	Dynamic Programming solution
+	*	Rather than calling the function repeatedly, store values in arrays, and build bottom up.
+	*/
 	public int dpSolutionUn(){
-		int elements = contents.length;
 		int capacity = maxCapacity;
-		//same thing:
-		int[][] solution = new int[maxCapacity + 1][contents.length+1];
+
+		int[] solution = new int[maxCapacity + 1];
+
+		solution[0] = 0;
 		
-		//base cases:
-		for (int i = 0; i <= contents.length; i++) solution[0][i] = 0;
-		for (int i = 0; i <= maxCapacity; i++) solution[i][0] = 0;
-		
-		//go row by row until you get to the end
-		//row = capacity, col = elements
-		for (int row = 1; row <= maxCapacity; row++){
-			for (int col = 1; col <= contents.length; col++){
-				int[] sols = new int[row/contents[col - 1].getWeight() + 1];
-				for (int i = 0; i < sols.length; i++){
-					sols[i] = i * contents[col - 1].getValue() + solution[row - i * contents[col-1].getWeight()][col - 1];
-				}
-				int max = 0;
-				for (int num: sols)
-					max = Math.max(max, num);
-				solution[row][col] = max;
+		//find solution for each integral capacity from 0 to max
+		for(int c = 1; c < solution.length; c++) {
+			int maxSol = 0;
+			
+			//consider all available items
+			for(int i = 0; i < contents.length; i++){
+				//if an item does not fit, don't consider it
+				if(c - contents[i].getWeight() < 0)
+					continue;
+				
+				int tempSol = solution[c - contents[i].getWeight()] + contents[i].getValue();
+				if(tempSol > maxSol)
+					maxSol = tempSol;
 			}
+			
+			solution[c] = maxSol;
 		}
-		return solution[capacity][elements];
+		
+		//return solution for the maximum capacity
+		return solution[capacity];
 	}
 	/**
 	 * Solves 0/1 problem given a capacity
