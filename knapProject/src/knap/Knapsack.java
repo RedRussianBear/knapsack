@@ -9,20 +9,18 @@ public class Knapsack {
 	}
 	
 	/**
-	 * Recursive solution to the 0/1 Knapsack Problem, meaning you either take it (1) or don't (0). You can't take more than 1 of something
-	 * Basic idea:
-	 * The max value for the first n terms either uses the last term or doesn't, so it equals the max of 
-	 * 1) not using the last term- the max value of the first n-1 terms with the same capacity
-	 * 2) using the last term-     the max value of the first n-1 terms with the capacity - the nth term's value 
-	 * 
+	 * Recursive solution to the 0/1 Knapsack Problem, meaning you either take 1 copy (1) or don't at all (0). 
+	 * Basic idea, there are two cases:
+	 * 1) use the last term + max of the smaller knapsack
+	 * 2) don't use the last term + same size knapsack but 1 less element
 	 * @param elements = number of elements used
 	 * @param capacity = capacity in knapsack
-	 * @return max value, with the total weight <= capacity
+	 * @return max value given a capacity, with the total weight <= capacity
 	 */
 	public int recursiveSolution01(int elements, int capacity){
 		int solution1, solution2;
-		//elements = 0 when it's solution(0, n)
-		//capacity = 0 when it's t[0] + solution(n, 0) (n can be 0)
+		
+		//if there are no elements or there's no space, you can fit 0 value in the knapsack
 		if (elements == 0 || capacity == 0)
 			return 0;
 		
@@ -31,6 +29,7 @@ public class Knapsack {
 		if (contents[elements - 1].getWeight() > capacity){
 			return recursiveSolution01(elements - 1, capacity);
 		}
+		//Two possible cases: use and don't use last term
 		else{
 			//Doesn't use last term
 			solution1 = recursiveSolution01(elements - 1, capacity);
@@ -42,32 +41,28 @@ public class Knapsack {
 		return Math.max(solution1, solution2);
 	}
 	public int dpSolution01(){
-		int[][] solution = new int[maxCapacity + 1][contents.length+1];
 		
-		//base cases:
-		for (int i = 0; i <= contents.length; i++) solution[0][i] = 0;
-		for (int i = 0; i <= maxCapacity; i++) solution[i][0] = 0;
+		//goes from (0,0) to (actual elements, actual size)
+		int[][] solution = new int[contents.length + 1][maxCapacity + 1];
 		
 		//go row by row until you get to the end
-		//row = capacity, col = elements
-		for (int row = 1; row <= maxCapacity; row++){
-			for (int col = 1; col <= contents.length; col++){
-				if (contents[col-1].getWeight() > row)
-					solution[row][col] = solution[row][col - 1];//same weight, one less element
+		//row = elements, col = capacity
+		for (int row = 1; row <= contents.length; row++){
+			for (int col = 1; col <= maxCapacity; col++){
+				
+				//if the item's weight is greater than the capacity
+				if (contents[row - 1].getWeight() > col)
+					solution[row][col] = solution[row-1][col];//same weight, one less element
+				
+				//consider both cases, just like recursive
 				else
-					solution[row][col] = Math.max(solution[row][col - 1], contents[col-1].getValue() + solution[row-contents[col-1].getWeight()][col - 1]);
+					solution[row][col] = Math.max(solution[row-1][col], contents[row-1].getValue() + solution[row - 1][col - contents[row-1].getWeight()]);
 			}
 		}
 		
-		return solution[maxCapacity][contents.length];
+		return solution[contents.length][maxCapacity];
 	}
-	/**
-	 * Recursive solution to the Unbounded Knapsack Problem, meaning you can take as many of an object as you want
-	 * Very similar to 01 problem, there are just more cases to consider
-	 * @param elements = number of elements used
-	 * @param capacity = capacity in knapsack
-	 * @return
-	 */
+	
 	public int recursiveSolutionUn(int capacity){
 		int maxSolution = 0;
 		
@@ -76,7 +71,7 @@ public class Knapsack {
 			if(contents[i].getWeight() > capacity)
 				continue;
 			
-			int tempSolution = contents[i].getValue() + recursiveSolutionUn(capacity - contents[i].getWeight);
+			int tempSolution = contents[i].getValue() + recursiveSolutionUn(capacity - contents[i].getWeight());
 			if(tempSolution > maxSolution)
 				maxSolution = tempSolution;
 		}
@@ -132,7 +127,7 @@ public class Knapsack {
 	 * @return solution to the unbounded knapsack problem 
 	 */
 	public int solveUn(){
-		return recursiveSolutionUn(contents.length, maxCapacity);
+		return recursiveSolutionUn(maxCapacity);
 	}
 	
 	public void setCapacity(int a){
@@ -140,17 +135,12 @@ public class Knapsack {
 	}
 	public static void main(String[] args){
 		Thing[] t = new Thing[5];
-		t[0] = new Thing(2, 3);
-		t[1] = new Thing(4, 5);
-		t[2] = new Thing(5, 6);
-		t[3] = new Thing(7, 8);
-		t[4] = new Thing(9, 10);
-		Knapsack K = new Knapsack(t, 20);
-		System.out.println(K.solve01());
-		System.out.println(K.dpSolution01());
-		System.out.println(K.solveUn());
-		System.out.println(K.dpSolutionUn());
-		K.setCapacity(19);
+		t[0] = new Thing(10, 80);
+		t[1] = new Thing(50, 180);
+		t[2] = new Thing(100, 1200);
+		t[3] = new Thing(2, 2000);
+		t[4] = new Thing(90, 5);
+		Knapsack K = new Knapsack(t, 17);
 		System.out.println(K.solve01());
 		System.out.println(K.dpSolution01());
 		System.out.println(K.solveUn());
